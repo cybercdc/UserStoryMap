@@ -73,10 +73,10 @@
         .status-pill { transition: all 0.2s; font-size: 8px; padding: 1px 6px; font-weight: 900; cursor: pointer; }
         .status-pill:hover { filter: brightness(0.9); transform: scale(1.05); }
 
-        .icon-option { cursor: pointer; transition: all 0.2s; border: 2px solid transparent; display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; color: #64748b; }
-        .icon-option:hover { background: #f1f5f9; border-radius: 8px; color: #4f46e5; }
-        .icon-selected { border-color: #4f46e5 !important; background: #eef2ff !important; border-radius: 8px; color: #4f46e5 !important; }
-        .icon-recommended { animation: pulseIcon 1.5s infinite; background: #fef3c7; border-radius: 8px; color: #b45309; }
+        .icon-option { cursor: pointer; transition: all 0.2s; border: 2px solid transparent; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; color: #64748b; }
+        .icon-option:hover { background: #f1f5f9; border-radius: 10px; color: #4f46e5; }
+        .icon-selected { border-color: #4f46e5 !important; background: #eef2ff !important; border-radius: 10px; color: #4f46e5 !important; }
+        .icon-recommended { animation: pulseIcon 1.5s infinite; background: #fef3c7; border-radius: 10px; color: #b45309; }
         @keyframes pulseIcon { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 
         .fade-in { animation: fadeIn 0.25s ease-out; }
@@ -127,7 +127,18 @@
             <div class="overflow-x-auto overflow-y-hidden pb-12">
                 <div class="inline-flex flex-col gap-5 min-w-max text-left">
                     <div class="flex gap-5 sticky-header bg-slate-50/95 backdrop-blur-sm pb-4 text-left">
-                        <div class="w-60 shrink-0 border-l-8 border-transparent flex items-center justify-center font-black text-slate-300 uppercase tracking-widest text-[10px]">Development Roadmap</div>
+                        <div class="w-60 shrink-0 border-l-8 border-transparent flex items-center justify-center text-left group">
+                            <div class="relative w-full">
+                                <input type="text" id="project-name-input"
+                                    class="font-black text-slate-800 tracking-tight italic text-lg w-full bg-slate-100/50 rounded-lg px-3 py-2 outline-none border-2 border-transparent hover:border-indigo-300 focus:border-indigo-500 focus:bg-white transition-all text-center cursor-pointer"
+                                    placeholder="项目名称"
+                                    onblur="saveProjectName()"
+                                    onkeypress="if(event.key==='Enter'){this.blur();}">
+                                <div class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                    <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </div>
+                            </div>
+                        </div>
                         <div class="flex gap-5 text-left" id="activity-headers"></div>
                     </div>
                     <div id="release-rows" class="flex flex-col gap-6 text-left"></div>
@@ -210,32 +221,63 @@
         const STORAGE_REL_KEY = 'v1.69_releases';
         const STORAGE_ACT_KEY = 'v1.69_activities';
         const STORAGE_PER_KEY = 'v1.69_personas';
+        const STORAGE_PROJECT_KEY = 'v1.69_project_name';
         const MAX_HISTORY = 60;
 
-        // --- 105项 语义化去重图标库 ---
-        const rawKeywords = "用户管理,权限管理,角色配置,组织架构,登录认证,单点登录,系统配置,参数管理,菜单管理,字典管理,日志管理,操作审计,会话管理,安全策略,密码策略,消息中心,通知公告,系统监控,健康检查,服务状态,流程管理,工作流,表单引擎,任务中心,工单系统,项目管理,需求管理,版本管理,发布管理,工时统计,资源管理,合同管理,客户管理,供应商管理,资产管理,库存管理,订单管理,费用管理,报销审批,财务接口,数据采集,数据同步,数据清洗,数据校验,数据治理,主数据,元数据,数据资产,数据血缘,数据质量,指标管理,统计分析,多维分析,实时分析,数据看板,BI报表,自助分析,数据大屏,趋势预测,决策支持,统一门户,中台服务,能力中心,服务治理,接口管理,API网关,消息队列,服务编排,微服务,容器平台,云资源,多租户,统一认证,平台监控,运维中心,智能引擎,模型管理,模型训练,模型推理,知识库,知识图谱,语义检索,智能问答,智能推荐,风险识别,异常检测,智能预测,智能质控,自动决策,智能报告,安全审计,权限审计,入侵检测,漏洞扫描,日志分析,告警中心,备份恢复,灾备管理,性能监控,运维分析";
-        const keywordList = rawKeywords.split(',');
-        
-        const pathTemplates = [
-            `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`,
-            `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`,
-            `<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>`,
-            `<circle cx="12" cy="12" r="10"/><path d="M12 2v20M2 12h20"/>`,
-            `<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>`,
-            `<path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9-9a9 9 0 0 1-9 9m9-9V21"/>`,
-            `<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>`,
-            `<path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>`,
-            `<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3"/>`,
-            `<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>`
+        // --- 多样化图标库 ---
+        const iconLibrary = [
+            { id: 'icon-0', icon: `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`, keywords: ['用户管理', '客户管理'] },
+            { id: 'icon-1', icon: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`, keywords: ['权限管理', '安全策略'] },
+            { id: 'icon-2', icon: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>`, keywords: ['角色配置', '团队管理'] },
+            { id: 'icon-3', icon: `<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>`, keywords: ['组织架构', '系统配置'] },
+            { id: 'icon-4', icon: `<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>`, keywords: ['登录认证', '单点登录'] },
+            { id: 'icon-5', icon: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/>`, keywords: ['密码策略', '安全审计'] },
+            { id: 'icon-6', icon: `<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>`, keywords: ['会话管理', '实时消息'] },
+            { id: 'icon-7', icon: `<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>`, keywords: ['消息中心', '通知公告'] },
+            { id: 'icon-8', icon: `<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>`, keywords: ['工单系统', '流程管理'] },
+            { id: 'icon-9', icon: `<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>`, keywords: ['菜单管理', '数据看板'] },
+            { id: 'icon-10', icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>`, keywords: ['需求管理', '知识库'] },
+            { id: 'icon-11', icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>`, keywords: ['统计分析', '多维分析'] },
+            { id: 'icon-12', icon: `<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>`, keywords: ['版本管理', '发布管理'] },
+            { id: 'icon-13', icon: `<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>`, keywords: ['性能监控', '健康检查'] },
+            { id: 'icon-14', icon: `<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>`, keywords: ['趋势预测', '实时分析'] },
+            { id: 'icon-15', icon: `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>`, keywords: ['系统监控', '参数管理'] },
+            { id: 'icon-16', icon: `<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>`, keywords: ['BI报表', '自助分析'] },
+            { id: 'icon-17', icon: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><line x1="20" y1="8" x2="20" y2="14"/>`, keywords: ['供应商管理', '合同管理'] },
+            { id: 'icon-18', icon: `<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/><polyline points="7.5 19.79 7.5 14.6 3 12"/><polyline points="21 12 16.5 14.6 16.5 19.79"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>`, keywords: ['项目管理', '资源管理'] },
+            { id: 'icon-19', icon: `<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>`, keywords: ['统一认证', '多租户'] },
+            { id: 'icon-20', icon: `<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>`, keywords: ['权限审计', '入侵检测'] },
+            { id: 'icon-21', icon: `<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>`, keywords: ['消息队列', '通知系统'] },
+            { id: 'icon-22', icon: `<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>`, keywords: ['API网关', '接口管理'] },
+            { id: 'icon-23', icon: `<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="10" y1="7" x2="14" y2="7"/><line x1="17" y1="10" x2="17" y2="14"/><line x1="7" y1="10" x2="7" y2="14"/><line x1="10" y1="17" x2="14" y2="17"/>`, keywords: ['服务编排', '微服务'] },
+            { id: 'icon-24', icon: `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`, keywords: ['智能引擎', '模型训练'] },
+            { id: 'icon-25', icon: `<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>`, keywords: ['智能推荐', '决策支持'] },
+            { id: 'icon-26', icon: `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`, keywords: ['智能预测', '异常检测'] },
+            { id: 'icon-27', icon: `<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`, keywords: ['风险识别', '告警中心'] },
+            { id: 'icon-28', icon: `<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>`, keywords: ['费用管理', '报销审批'] },
+            { id: 'icon-29', icon: `<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>`, keywords: ['订单管理', '库存管理'] },
+            { id: 'icon-30', icon: `<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>`, keywords: ['工作流', '数据质量'] },
+            { id: 'icon-31', icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>`, keywords: ['数据资产', '文档管理'] },
+            { id: 'icon-32', icon: `<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>`, keywords: ['数据血缘', '数据治理'] },
+            { id: 'icon-33', icon: `<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>`, keywords: ['数据采集', '数据导入'] },
+            { id: 'icon-34', icon: `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/>`, keywords: ['智能问答', '智能质控'] },
+            { id: 'icon-35', icon: `<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>`, keywords: ['知识图谱', '语义检索'] },
+            { id: 'icon-36', icon: `<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>`, keywords: ['统一门户', '中台服务'] },
+            { id: 'icon-37', icon: `<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>`, keywords: ['能力中心', '服务治理'] },
+            { id: 'icon-38', icon: `<rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>`, keywords: ['容器平台', '云资源'] },
+            { id: 'icon-39', icon: `<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="15" x2="23" y2="15"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="15" x2="4" y2="15"/>`, keywords: ['平台监控', '运维中心'] },
+            { id: 'icon-40', icon: `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>`, keywords: ['工时统计', '任务中心'] },
+            { id: 'icon-41', icon: `<path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>`, keywords: ['日志管理', '操作审计'] },
+            { id: 'icon-42', icon: `<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>`, keywords: ['备份恢复', '灾备管理'] },
+            { id: 'icon-43', icon: `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>`, keywords: ['智能报告', '自动决策'] },
+            { id: 'icon-44', icon: `<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>`, keywords: ['数据同步', '数据清洗'] },
+            { id: 'icon-45', icon: `<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>`, keywords: ['字典管理', '主数据'] },
+            { id: 'icon-46', icon: `<path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/>`, keywords: ['实时分析', '指标管理'] },
+            { id: 'icon-47', icon: `<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>`, keywords: ['元数据', '数据校验'] },
+            { id: 'icon-48', icon: `<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>`, keywords: ['表单引擎', '数据大屏'] },
+            { id: 'icon-49', icon: `<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>`, keywords: ['语义检索', '搜索功能'] },
+            { id: 'icon-50', icon: `<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>`, keywords: ['客户服务', '人工客服'] }
         ];
-
-        const iconLibrary = keywordList.map((k, i) => {
-            const base = pathTemplates[i % pathTemplates.length];
-            const angle = (i * 37) % 360;
-            // 每一个图标都带有独特的组合路径和背景偏移，确保视觉无重复
-            const stamp = `<path d="M20 4l-4 4" stroke-opacity="0.3" transform="rotate(${angle}, 12, 12)"/><circle cx="${(i%8)*2+4}" cy="${(i%7)*2+4}" r="0.5" opacity="0.3"/>`;
-            return { id: 'icon-' + i, icon: base + stamp, keywords: [k] };
-        });
 
         // 单例逻辑变量，避免重复声明
         let selectedIconIdValue = 'icon-0';
@@ -243,10 +285,10 @@
         function initIconLibrary() {
             const grid = document.getElementById('icon-library-grid');
             grid.innerHTML = iconLibrary.map(item => `
-                <div id="icon-opt-${item.id}" onclick="selectIcon('${item.id}')" 
-                     class="icon-option p-3 transition border-2 border-transparent" 
+                <div id="icon-opt-${item.id}" onclick="selectIcon('${item.id}')"
+                     class="icon-option transition border-2 border-transparent"
                      title="${item.keywords[0]}">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2">${item.icon}</svg>
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2">${item.icon}</svg>
                 </div>`).join('');
         }
 
@@ -388,11 +430,20 @@
             localStorage.setItem(STORAGE_REL_KEY, JSON.stringify(currentReleases));
             localStorage.setItem(STORAGE_PER_KEY, JSON.stringify(currentPersonas));
         }
+
+        function saveProjectName() {
+            const name = document.getElementById('project-name-input').value.trim();
+            if (name) {
+                localStorage.setItem(STORAGE_PROJECT_KEY, name);
+            }
+        }
         function load() {
             const ss = localStorage.getItem(STORAGE_DATA_KEY);
             const sr = localStorage.getItem(STORAGE_REL_KEY);
             const sa = localStorage.getItem(STORAGE_ACT_KEY);
             const sp = localStorage.getItem(STORAGE_PER_KEY);
+            const projectName = localStorage.getItem(STORAGE_PROJECT_KEY) || 'Development Roadmap';
+            document.getElementById('project-name-input').value = projectName;
             currentActivities = sa ? JSON.parse(sa) : [
                 { id: 'act1', name: '用户认证与授权', iconId: 'icon-4' },
                 { id: 'act2', name: '客户管理', iconId: 'icon-17' },
@@ -421,10 +472,11 @@
         }
 
         function exportToFile() {
-            const data = { v: '1.69', activities: currentActivities, stories: currentStories, releases: currentReleases, personas: currentPersonas };
+            const projectName = document.getElementById('project-name-input').value || 'StoryMap';
+            const data = { v: '1.69', projectName: projectName, activities: currentActivities, stories: currentStories, releases: currentReleases, personas: currentPersonas };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-            a.download = `StoryMap_PRD_Strict_v1.69.json`; a.click();
+            a.download = `${projectName.replace(/\s+/g, '_')}_StoryMap_v1.69.json`; a.click();
             showMessage('备份导出成功');
         }
         function importFromFile(e) {
@@ -435,6 +487,11 @@
                     const d = JSON.parse(re.target.result);
                     pushToHistory();
                     currentActivities = d.activities; currentStories = d.stories; currentReleases = d.releases; currentPersonas = d.personas;
+                    // 还原项目名称
+                    if (d.projectName) {
+                        document.getElementById('project-name-input').value = d.projectName;
+                        localStorage.setItem(STORAGE_PROJECT_KEY, d.projectName);
+                    }
                     save(); renderAll(); showMessage('地图数据已从文件还原');
                 } catch(err) { showMessage('文件格式无效', true); }
             };
